@@ -30,6 +30,7 @@
 
 		//main function
   		void main(void) {
+            //count the number of neighbors for the cell at xy
             int neighbors = 0;
             for(int dx = -1 ; dx <= 1 ; dx++)
                 for(int dy = -1 ; dy <= 1 ; dy++)
@@ -38,6 +39,7 @@
 
             gl_FragColor = texture2D(state,gl_FragCoord.xy/uResolution);
 
+            //if the current cell is active and has > 3 neighbors or < 2 neighbors delete it
             if(gl_FragColor.x > 0.5)
             {
                 if(neighbors < 2 || neighbors > 3)
@@ -89,14 +91,16 @@
 				glCanvas.depthFunc(glCanvas.LEQUAL);
 				glCanvas.clear(glCanvas.COLOR_BUFFER_BIT|glCanvas.DEPTH_BUFFER_BIT);
 
+                //create a new CA object
                 CA = new CellularAutomata(glCanvas);
 
+                //populate it randomly
                 for(var i = 0 ; i < 100000 ; i++)
                 {
                     CA.state.set([255],4*Math.floor((Math.random()*CA.size*CA.size)));
                 }
 
-
+                //setup the texture memory
                 CA.build();
 			}
 
@@ -115,6 +119,8 @@
 
 				glCanvas.clear(glCanvas.COLOR_BUFFER_BIT|glCanvas.DEPTH_BUFFER_BIT);
 
+                //draw and update. To update, we render to a new texture
+                //and then copy this texture to the state
                 CA.render();
                 CA.update();
 			}
