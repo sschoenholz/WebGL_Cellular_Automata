@@ -1,0 +1,126 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+  <head>
+    <style>
+        body {
+            background-color: gray;
+        }
+    </style>
+
+    <title>Cellular Automata</title>
+
+	<script type="text/javascript" src="javascripts/resources/webgl-utils.js"></script>
+	<script language="javascript" src="javascripts/engine/opengl.js" type="text/javascript"></script>
+	<script language="javascript" src="javascripts/engine/geometry.js" type="text/javascript"></script>
+	<script type="text/javascript" src="javascripts/resources/gl-matrix.js"></script>
+
+  </head>
+  <body>
+    <canvas id="canvas" width = "512" height = "512"></canvas><br>
+
+    <script id="shader-fs" type="x-shader/x-fragment">
+  		precision highp float;
+
+		uniform vec2 uResolution;
+
+		//the scene as 2d textures
+        //the current state of the CA
+		uniform sampler2D state;
+
+		//main function
+  		void main(void) {
+            int neighbors = 0;
+            for(int dx = -1 ; dx <= 1 ; dx++)
+                for(int dy = -1 ; dy <= 1 ; dy++)
+                    if((!(dx==0&&dy==0))&&texture2D(state,(gl_FragCoord.xy+vec2(dx,dy))/uResolution).x > 0.5)
+                        neighbors++;
+
+            gl_FragColor = texture2D(state,gl_FragCoord.xy/uResolution);
+
+            if(gl_FragColor.x > 0.5)
+            {
+                if(neighbors < 2 || neighbors > 3)
+                    gl_FragColor.x = 0.0;
+            }else{
+                if(neighbors == 3)
+                    gl_FragColor.x = 1.0;
+            }
+  		}
+	</script>
+
+	<script id="shader-vs" type="x-shader/x-vertex">
+	  attribute vec2 aVertexPosition;
+
+	  void main(void) {
+		gl_Position = vec4(aVertexPosition, 0.0, 1.0);
+	  }
+	</script>
+
+	<script type='text/javascript'>
+    //<![CDATA[
+		var FPS = 60;
+		var glCanvas;
+
+		var CA;
+
+		//Function to initialize data
+		initialize();
+
+		//Start the main loop
+		tick();
+
+		//Main game loop.
+		function tick() {
+			requestAnimFrame(tick);
+			update();
+			draw();
+		}
+
+		function initialize()
+		{
+			glCanvas = InitializeWebGL(document.getElementById("canvas"));
+
+			if(glCanvas)
+			{
+				//Initialize basic attributes
+				glCanvas.clearColor(0.0,0.0,0.0,1.0);
+				glCanvas.enable(glCanvas.DEPTH_TEST);
+				glCanvas.depthFunc(glCanvas.LEQUAL);
+				glCanvas.clear(glCanvas.COLOR_BUFFER_BIT|glCanvas.DEPTH_BUFFER_BIT);
+
+                CA = new CellularAutomata(glCanvas);
+
+                for(var i = 0 ; i < 100000 ; i++)
+                {
+                    CA.state.set([255],4*Math.floor((Math.random()*CA.size*CA.size)));
+                }
+
+
+                CA.build();
+			}
+
+		}
+
+		//function to update logic
+		function update()
+		{
+		}
+
+		//function to draw to the world
+		function draw() {
+			if(glCanvas){
+				//draw the world
+				glCanvas.viewport(0.0,0.0,glCanvas.viewportWidth,glCanvas.viewportHeight);
+
+				glCanvas.clear(glCanvas.COLOR_BUFFER_BIT|glCanvas.DEPTH_BUFFER_BIT);
+
+                CA.render();
+                CA.update();
+			}
+		}
+
+	//]]>
+    </script>
+  </body>
+</html>
